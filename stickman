@@ -1,0 +1,85 @@
+import os, time
+
+import pygame, sys, random
+from pygame.locals import *
+
+pygame.init()
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 650
+res = (SCREEN_WIDTH, SCREEN_HEIGHT)
+screen = pygame.display.set_mode(res)
+pygame.display.set_caption('Tutoring')
+
+clock = pygame.time.Clock()
+
+current_time = time.time()
+assetWebLink = "https://zegley.itch.io/2d-platformermetroidvania-asset-pack"
+run_right = []
+run_left = []
+jump = []
+for image in os.listdir('Stickman_run'):
+    frame = pygame.image.load('Stickman_run/' + image)
+    run_right.append(frame)
+for image in run_right:
+    new = pygame.transform.flip(image, True, False)
+    run_left.append(new)
+temp1 = pygame.image.load('background.png')
+background = pygame.transform.scale(temp1, res)
+idle_right = run_right[5]
+idle_left = run_left[5]
+class Stickman:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.images = 9
+        self.index = 0
+        self.store = -1
+        self.rect = pygame.Rect(self.x, self.y, 62, 64)
+        self.vel = 10
+
+    def run(self, image_list):
+        self.index = (self.index + 1) % 9
+        self.store = self.index
+        self.images = image_list[self.index]
+        screen.blit(self.images, (self.rect.x, self.rect.y))
+        self.rect.x += self.vel
+    def idle(self, image):
+        screen.blit(image, (self.rect.x, self.rect.y))
+
+man = Stickman(500, 436)
+moving = False
+while True:
+    mouse_pos = pygame.mouse.get_pos()
+    temp2 = time.time() - current_time
+    elapsed = round(temp2, 0)
+    key = pygame.key.get_pressed()
+    print("\r", mouse_pos, end = "")
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            sys.exit(0)
+        if event.type == KEYDOWN:
+            if event.key == K_ESCAPE:
+                sys.exit(0)
+    if key[K_RIGHT]:
+        moving = True
+        status = run_right
+        man.vel = 10
+    if key[K_LEFT]:
+        moving = True
+        status = run_left
+        man.vel = -10
+
+    screen.blit(background, (0, 0))
+
+    if moving:
+        man.run(status)
+    else:
+        if man.vel < 0:
+            man.idle(idle_left)
+        else:
+            man.idle(idle_right)
+    moving = False
+
+
+    pygame.display.update()
+    clock.tick(20)
