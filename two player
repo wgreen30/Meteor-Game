@@ -1,0 +1,717 @@
+import pygame, sys, random, os, time
+from pygame.locals import *
+import spritesheet
+assetWebLink = "https://zegley.itch.io/2d-platformermetroidvania-asset-pack"
+pygame.init()
+SCREEN_WIDTH = 1700
+SCREEN_HEIGHT = 800
+res = (SCREEN_WIDTH, SCREEN_HEIGHT)
+screen = pygame.display.set_mode(res)
+pygame.display.set_caption('Pixel Fighter')
+clock = pygame.time.Clock()
+savetime = time.time()
+BLACK = (0, 0, 0)
+animation_lengths = []
+# background handling
+GROUND_LEVEL = SCREEN_HEIGHT - 75
+bg = pygame.image.load('pixelfighter_background(1).png')
+background = pygame.transform.scale(bg, (SCREEN_WIDTH, SCREEN_HEIGHT))
+ground_rect = pygame.Rect(0, GROUND_LEVEL, SCREEN_WIDTH, 25)
+# healthbar handling player 1
+health_bar = pygame.image.load('healthbar.png').convert_alpha()
+health_bar_scaled = pygame.transform.scale(health_bar, (250, 150))
+health_rect = pygame.Rect(45, 58, 180, 20)
+#healthbar handling player 2
+health_bar2 = pygame.image.load('healthbar.png').convert_alpha()
+health_bar2_scaled = pygame.transform.scale(health_bar2, (250, 150))
+health_rect2 = pygame.Rect(1255, 58, 180, 20)
+# dashbar handling player 1
+dash_temp1 = pygame.image.load('dash_bar.png').convert_alpha()
+dash_temp1.set_colorkey('white')
+#dashbar handling player 2
+dash_temp3 = pygame.image.load('dash_bar.png').convert_alpha()
+dash_temp3.set_colorkey('white')
+x_size = 275
+y_size = x_size / 1.25
+dash_temp2 = pygame.transform.scale(dash_temp1, (x_size, y_size))
+dash_temp2.set_colorkey('white')
+dash_temp4 = pygame.transform.scale(dash_temp3, (x_size, y_size))
+dash_temp4.set_colorkey('white')
+rx_size = 200
+ry_size = rx_size/8
+dash_rect = pygame.Rect(28, 20, rx_size, ry_size)
+dash_rect2 = pygame.Rect(1237, 20, rx_size, ry_size)
+# idle handling
+idle_spritesheet_image = pygame.image.load('Asset Packs 1-5/Asset Pack-V1/Player Idle/Player Idle 48x48.png').convert_alpha()
+idle_spritesheet = spritesheet.SpriteSheet(idle_spritesheet_image)
+idle_length = ("idle", 10)
+idle_right = []
+idle_left = []
+for x in range(idle_length[1]):
+    img = idle_spritesheet.get_image(x, 48, 48, 3, BLACK)
+    idle_right.append(img)
+for item in idle_right:
+    img = pygame.transform.flip(item, True, False).convert_alpha()
+    idle_left.append(img)
+# run handling
+run_spritesheet_image = pygame.image.load('Asset Packs 1-5/Asset Pack-V1/Player Run/player run 48x48.png').convert_alpha()
+run_spritesheet = spritesheet.SpriteSheet(run_spritesheet_image)
+run_length = ("Run", 8)
+run_right = []
+run_left = []
+for x in range(run_length[1]):
+    img = run_spritesheet.get_image(x, 48, 48, 3, BLACK)
+    run_right.append(img)
+for item in run_right:
+    img = pygame.transform.flip(item, True, False).convert_alpha()
+    run_left.append(img)
+# jump handling
+jump_spritesheet_image = pygame.image.load('Asset Packs 1-5/Asset Pack-V1/Player jump/player new jump 48x48.png').convert_alpha()
+jump_spritesheet = spritesheet.SpriteSheet(jump_spritesheet_image)
+jump_length = ("Jump", 5)
+jump_right = []
+jump_left = []
+for x in range(jump_length[1]):
+    img = jump_spritesheet.get_image(x, 48, 48, 3, BLACK)
+    jump_right.append(img)
+for item in jump_right:
+    img = pygame.transform.flip(item, True, False).convert_alpha()
+    jump_left.append(img)
+# katana run handling
+katana_run_spritesheet_image = pygame.image.load('Asset Packs 1-5/Asset Pack-V4/Player Katana Run/player katana run 48x48.png').convert_alpha()
+katana_run_spritesheet = spritesheet.SpriteSheet(katana_run_spritesheet_image)
+katana_run_length = ("Run", 8)
+katana_run_right = []
+katana_run_left = []
+for x in range(katana_run_length[1]):
+    img = katana_run_spritesheet.get_image(x, 48, 48, 3, BLACK)
+    katana_run_right.append(img)
+for item in katana_run_right:
+    img = pygame.transform.flip(item, True, False).convert_alpha()
+    katana_run_left.append(img)
+# katana idle handling
+katana_idle_spritesheet_image = pygame.image.load('Asset Packs 1-5/Asset Pack-V3/Player Sword Idle/Player Sword Idle 48x48.png').convert_alpha()
+katana_idle_spritesheet = spritesheet.SpriteSheet(katana_idle_spritesheet_image)
+katana_idle_length = ("Run", 10)
+katana_idle_right = []
+katana_idle_left = []
+for x in range(katana_idle_length[1]):
+    img = katana_idle_spritesheet.get_image(x, 48, 48, 3, BLACK)
+    katana_idle_right.append(img)
+for item in katana_idle_right:
+    img = pygame.transform.flip(item, True, False).convert_alpha()
+    katana_idle_left.append(img)
+# Dash handling
+dash_spritesheet_image = pygame.image.load('Asset Packs 1-5/Asset Pack-V5/Dash/dash.png').convert_alpha()
+dash_spritesheet = spritesheet.SpriteSheet(dash_spritesheet_image)
+dash_length = ("Run", 9)
+dash_right = []
+dash_left = []
+for x in range(dash_length[1]):
+    img = dash_spritesheet.get_image(x, 48, 48, 3, 'white')
+    dash_right.append(img)
+for item in dash_right:
+    img = pygame.transform.flip(item, True, False).convert_alpha()
+    dash_left.append(img)
+# damage handling
+damage_spritesheet_image = pygame.image.load('Asset Packs 1-5/Asset Pack-V3/Player Hurt-Damaged/Player Hurt 48x48.png').convert_alpha()
+damage_spritesheet = spritesheet.SpriteSheet(damage_spritesheet_image)
+damage_length = ("Run", 4)
+damage_right = []
+damage_left = []
+for x in range(damage_length[1]):
+    img = damage_spritesheet.get_image(x, 48, 48, 3, 'black')
+    damage_right.append(img)
+for item in damage_right:
+    img = pygame.transform.flip(item, True, False).convert_alpha()
+    damage_left.append(img)
+# damage handling
+jab_spritesheet_image = pygame.image.load('Asset Packs 1-5/Asset Pack-V4/Player Punch Jab/Player Jab 48x48.png').convert_alpha()
+jab_spritesheet = spritesheet.SpriteSheet(jab_spritesheet_image)
+jab_length = ("Run", 6)
+cross_length = ("Run", 7)
+punch_length = 6
+punch_right = []
+punch_left = []
+for x in range(jab_length[1]):
+    img = jab_spritesheet.get_image(x, 48, 48, 3, 'black')
+    punch_right.append(img)
+for item in punch_right:
+    img = pygame.transform.flip(item, True, False).convert_alpha()
+    punch_left.append(img)
+# Katana run attack handling
+katana_run_attack_spritesheet_image = pygame.image.load('Asset Packs 1-5/Asset Pack-V4/Player Katana Attack-Sheathe/player katana attack-sheathe 80x64.png').convert_alpha()
+katana_run_attack_spritesheet = spritesheet.SpriteSheet(katana_run_attack_spritesheet_image)
+katana_run_attack_length = ("Run", 7)
+katana_run_attack_right = []
+katana_run_attack_left = []
+for x in range(katana_run_attack_length[1]):
+    img = katana_run_attack_spritesheet.get_image(x, 80, 64, 3, 'black')
+    katana_run_attack_right.append(img)
+for item in katana_run_attack_right:
+    img = pygame.transform.flip(item, True, False).convert_alpha()
+    katana_run_attack_left.append(img)
+# Katana run 02 handling
+katana_02_spritesheet_image = pygame.image.load('Asset Packs 1-5/Asset Pack-V4/Player Katana Run Attack/player katana running attack (upper body).png').convert_alpha()
+katana_02_spritesheet = spritesheet.SpriteSheet(katana_02_spritesheet_image)
+katana_02_length = ("Run", 8)
+katana_02_right = []
+katana_02_left = []
+for x in range(katana_02_length[1]):
+    img = katana_02_spritesheet.get_image(x, 80, 64, 3, 'white')
+    katana_02_right.append(img)
+for item in katana_02_right:
+    img = pygame.transform.flip(item, True, False).convert_alpha()
+    katana_02_left.append(img)
+# Game Variables
+dx = 10
+dy = 10
+class Stickman:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.rect = pygame.Rect(self.x, self.y, 144, 144)
+        self.init_time = pygame.time.get_ticks()
+        self.idle_frame_dis_time = (idle_length[1] * 100) / 10
+        self.run_frame_dis_time = (run_length[1] * 100) / 10
+        self.jump_frame_dis_time = 100
+        self.dash_frame_dis_time = (dash_length[1] * 100) / 10
+        self.damage_frame_dis_time = (damage_length[1] * 100) / 10
+        self.punch_frame_dis_time = 50
+        self.katana_02_frame_dis_time = 50
+        self.idle_index = 0
+        self.run_index = 0
+        self.jump_index = 0
+        self.dash_index = -1
+        self.damage_index = -1
+        self.punch_index = 0
+        self.katana_attack_index = 0
+        self.katana_02_index = 0
+        self.dir = 0
+        self.dx = 0
+        self.dy = 0
+        self.in_air, self.on_ground, self.facing_right, self.facing_left, self.moving_right, self.moving_left = False, True, True, False, False, False
+        self.inventory = ["katana", "melee"]
+        self.equipped = "melee"
+        self.dashing = False
+        self.onscreen = True
+        self.health = 18
+        self.hit = False
+        self.punching = False
+        self.katana_run_attack = False
+        self.katana_02 = False
+        # dashbar
+        self.dash_time = None
+        self.stamina = 3
+        self.can_dash = True
+        self.status = "idle_right"
+    def animate(self):
+        self.dx = 0
+        self.dy = 0
+        current_time = pygame.time.get_ticks()
+        # idle animations
+        if "idle" in self.status:
+            if current_time - self.init_time > self.idle_frame_dis_time:
+                if self.idle_index < idle_length[1] - 1:
+                    self.idle_index += 1
+                    self.init_time = current_time
+                else:
+                    self.idle_index = 0
+            if self.status == "idle_right":
+                self.image = idle_right[self.idle_index]
+            if self.status == "idle_left":
+                self.image = idle_left[self.idle_index]
+            if self.status == "katana_idle_right":
+                self.image = katana_idle_right[self.idle_index]
+            if self.status == "katana_idle_left":
+                self.image = katana_idle_left[self.idle_index]
+        if "02" in self.status:
+            if current_time - self.init_time > self.katana_02_frame_dis_time:
+                if self.katana_02_index < katana_02_length[1] - 1:
+                    self.katana_02_index += 1
+                    self.init_time = current_time
+                else:
+                    self.katana_02_index = 0
+                    self.katana_02 = False
+            if self.status == "katana_02_right":
+                self.image = katana_02_right[self.katana_02_index]
+                self.dx = 10
+            if self.status == "katana_02_left":
+                self.image = katana_02_left[self.katana_02_index]
+                self.dx = -10
+        elif "punch" in self.status:
+            if current_time - self.init_time > self.punch_frame_dis_time:
+                if self.punch_index < punch_length - 1:
+                    self.punch_index += 1
+                    self.init_time = current_time
+                else:
+                    self.punch_index = 0
+                    self.punching = False
+            if self.status == "punch_right":
+                self.image = punch_right[self.punch_index]
+            if self.status == "punch_left":
+                self.image = punch_left[self.punch_index]
+        elif "katana_run_attack" in self.status:
+            if current_time - self.init_time > 60:
+                if self.katana_attack_index < katana_run_attack_length[1] - 1:
+                    self.katana_attack_index += 1
+                    self.init_time = current_time
+                else:
+                    self.katana_attack_index = 0
+                    self.katana_run_attack = False
+            if self.status == "katana_run_attack_right":
+                self.image = katana_run_attack_right[self.katana_attack_index]
+            if self.status == "katana_run_attack_left":
+                self.image = katana_run_attack_left[self.katana_attack_index]
+        elif "run" in self.status:
+            if current_time - self.init_time > self.run_frame_dis_time:
+                if self.run_index < run_length[1] - 1:
+                    self.run_index += 1
+                    self.init_time = current_time
+                else:
+                    self.run_index = 0
+            if self.status == "run_right":
+                self.image = run_right[self.run_index]
+                self.dx = 10
+            if self.status == "run_left":
+                self.image = run_left[self.run_index]
+                self.dx = -10
+            if self.status == "katana_run_right":
+                self.image = katana_run_right[self.run_index]
+                self.dx = 10
+            if self.status == "katana_run_left":
+                self.image = katana_run_left[self.run_index]
+                self.dx = -10
+        elif "dash" in self.status:
+            if current_time - self.init_time > self.dash_frame_dis_time:
+                if self.dash_index < dash_length[1] - 6:
+                    self.dash_index += 1
+                    self.init_time = current_time
+                else:
+                    self.dash_index = -1
+                    self.dashing = False
+                    self.can_dash = False
+                    self.stamina = 0
+                    self.dash_time = pygame.time.get_ticks()
+            if self.status == "dash_right":
+                match self.dash_index:
+                    case 0:
+                        self.dx = 70
+                    case 1:
+                        self.dx = 40
+                    case 2:
+                        self.dx = 30
+                    case 3:
+                        self.dx = 20
+                    case 4:
+                        self.dx = 10
+                    case 5:
+                        self.dx = 5
+                    case 6:
+                        self.dx = 0
+                    case 7:
+                        self.dx = 0
+                if self.dashing:
+                    self.image = dash_right[self.dash_index]
+            if self.status == "dash_left":
+                match self.dash_index:
+                    case 0:
+                        self.dx = -70
+                    case 1:
+                        self.dx = -40
+                    case 2:
+                        self.dx = -30
+                    case 3:
+                        self.dx = -20
+                    case 4:
+                        self.dx = -10
+                    case 5:
+                        self.dx = -5
+                if self.dashing:
+                    self.image = dash_left[self.dash_index]
+        elif "jump" in self.status and self.in_air:
+            if current_time - self.init_time > self.jump_frame_dis_time:
+                if self.jump_index < jump_length[1]:
+                    self.jump_index += 1
+                    self.init_time = current_time
+                elif (self.rect.bottom - 25) + self.dy > ground_rect.top:
+                    self.dy = 0
+                    self.rect.bottom = GROUND_LEVEL + 25
+                    self.in_air = False
+                    self.on_ground = True
+                    self.jump_index = 0
+            if self.status == "jump_right":
+                if self.jump_index == 1:
+                    self.image = jump_right[0]
+                    self.dy= -25
+                if self.jump_index == 2:
+                    self.image = jump_right[1]
+                    self.dy = -9
+                if self.jump_index == 3:
+                    self.image = jump_right[2]
+                    self.dy = -3
+                if self.jump_index == 4:
+                    self.image = jump_right[3]
+                    self.dy = 9
+                if self.jump_index == 5:
+                    self.image = jump_right[4]
+                    self.dy = 15
+                if self.jump_index == 6:
+                    self.image = jump_right[5]
+                    self.dy = 15
+                self.dx = 10
+            elif self.status == "jump_left":
+                if self.jump_index == 1:
+                    self.image = jump_left[0]
+                    self.dy = -25
+                if self.jump_index == 2:
+                    self.image = jump_left[1]
+                    self.dy = -9
+                if self.jump_index == 3:
+                    self.image = jump_left[2]
+                    self.dy = -3
+                if self.jump_index == 4:
+                    self.image = jump_left[3]
+                    self.dy = 9
+                if self.jump_index == 5:
+                    self.image = jump_left[4]
+                    self.dy = 15
+                if self.jump_index == 6:
+                    self.image = jump_left[5]
+                    self.dy = 15
+                self.dx = -10
+            if self.status == "jump_zzz_right":
+                if self.jump_index == 1:
+                    self.image = jump_right[0]
+                    self.dy = -25
+                if self.jump_index == 2:
+                    self.image = jump_right[1]
+                    self.dy = -9
+                if self.jump_index == 3:
+                    self.image = jump_right[2]
+                    self.dy = -3
+                if self.jump_index == 4:
+                    self.image = jump_right[3]
+                    self.dy = 9
+                if self.jump_index == 5:
+                    self.image = jump_right[4]
+                    self.dy = 15
+                if self.jump_index == 6:
+                    self.image = jump_right[5]
+                    self.dy = 15
+            elif self.status == "jump_zzz_left":
+                if self.jump_index == 1:
+                    self.image = jump_left[0]
+                    self.dy = -30
+                if self.jump_index == 2:
+                    self.image = jump_left[1]
+                    self.dy = -9
+                if self.jump_index == 3:
+                    self.image = jump_left[2]
+                    self.dy = -3
+                if self.jump_index == 4:
+                    self.image = jump_left[3]
+                    self.dy = 9
+                if self.jump_index == 5:
+                    self.image = jump_left[4]
+                    self.dy = 15
+                if self.jump_index == 6:
+                    self.image = jump_left[5]
+                    self.dy = 15
+        if "damage" in self.status:
+            if current_time - self.init_time > self.damage_frame_dis_time:
+                if self.damage_index < damage_length[1] - 1:
+                    self.damage_index += 1
+                    self.init_time = current_time
+                else:
+                    self.hit = False
+                    self.damage_index = -1
+            if self.status == "damage_right":
+                self.image = damage_right[self.damage_index]
+            if self.status == "damage_left":
+                self.image = damage_left[self.damage_index]
+        if (self.rect.right - 30) + self.dx > SCREEN_WIDTH:
+            self.dx = 0
+        if (self.rect.left + 30) + self.dx < 0:
+            self.dx = -self.rect.left - 30
+        self.rect.x += self.dx
+        self.rect.y += self.dy
+    def update_ui(self):
+        health_rect.width = self.health * 10
+        dash_rect.width = self.stamina * 200/3
+        dash_time = pygame.time.get_ticks()
+        if not self.can_dash:
+            if dash_time - self.dash_time >= 100 and self.stamina <= 3:
+                self.stamina += .1
+                self.dash_time = pygame.time.get_ticks()
+            if self.stamina >= 3:
+                self.can_dash = True
+    def update_ui2(self):
+        health_rect2.width = self.health * 10
+        dash_rect2.width = self.stamina * 200/3
+        dash_time = pygame.time.get_ticks()
+        if not self.can_dash:
+            if dash_time - self.dash_time >= 100 and self.stamina <= 3:
+                self.stamina += .1
+                self.dash_time = pygame.time.get_ticks()
+            if self.stamina >= 3:
+                self.can_dash = True
+    def input_player2(self):
+        key = pygame.key.get_pressed()
+        if self.moving_right:
+            self.facing_right = True
+            self.facing_left = False
+        if self.moving_left:
+            self.facing_right = False
+            self.facing_left = True
+        # running right and left
+        if key[K_RIGHT] and not self.moving_left:
+            self.moving_right = True
+        else:
+            self.moving_right = False
+        if key[K_LEFT] and not self.moving_right:
+            self.moving_left = True
+        else:
+            self.moving_left = False
+        # jumping right and left
+        if key[K_UP] and self.on_ground:
+            self.in_air = True
+        # equipping katana
+        if key[K_PERIOD] and self.equipped != self.inventory[0]:
+            self.equipped = self.inventory[0]
+        if key[K_COMMA] and self.equipped != self.inventory[1]:
+            self.equipped = self.inventory[1]
+        # dashing logic
+        if self.can_dash:
+            if self.equipped == self.inventory[0] and key[K_RSHIFT] and not self.dashing:
+                self.dashing = True
+        # punching logic
+        if key[K_m] and not self.punching and self.equipped == self.inventory[1]:
+            self.punching = True
+        # katana run attack logic
+        if key[K_n] and not self.punching and self.equipped == self.inventory[0] and self.on_ground and (
+                "idle" in self.status):
+            self.katana_run_attack = True
+        # katana 02 attack logic
+        if key[K_n] and self.equipped == self.inventory[0] and self.on_ground and (
+                self.moving_right or self.moving_left):
+            self.katana_02 = True
+        # Idle Animation Logic
+        if self.on_ground and self.facing_left:
+            self.status = "idle_left"
+        elif self.on_ground and self.facing_right:
+            self.status = "idle_right"
+        if self.on_ground and self.facing_left and self.equipped == self.inventory[0] and not self.dashing:
+            self.status = "katana_idle_left"
+        elif self.on_ground and self.facing_right and self.equipped == self.inventory[0] and not self.dashing:
+            self.status = "katana_idle_right"
+        # Running annimation logic
+        if self.on_ground and self.moving_right and not self.dashing:
+            self.status = "run_right"
+        if self.on_ground and self.moving_left and not self.dashing:
+            self.status = "run_left"
+        # dashing logic
+        if self.dashing and (self.facing_right or self.status == "katana_run_right"):
+            self.status = "dash_right"
+        if self.dashing and (self.facing_left or self.moving_left):
+            self.status = "dash_left"
+        # punching logic
+        if self.punching and self.on_ground and (self.facing_right or self.moving_right):
+            self.status = "punch_right"
+        if self.punching and self.on_ground and (self.facing_left or self.moving_left):
+            self.status = "punch_left"
+        # katana attack logic
+        if self.katana_run_attack and self.facing_right:
+            self.status = "katana_run_attack_right"
+        if self.katana_run_attack and self.facing_left:
+            self.status = "katana_run_attack_left"
+        if self.katana_02 and self.moving_right:
+            self.status = "katana_02_right"
+        if self.katana_02 and self.moving_left:
+            self.status = "katana_02_left"
+        # damage logic
+        if self.hit and (self.facing_right or self.moving_right or self.dashing or (
+                self.in_air and self.moving_right)):
+            self.status = "damage_right"
+        if self.hit and self.facing_left:
+            self.status = "damage_left"
+        # jumping Logic
+        if self.in_air and self.moving_right and not self.hit and not self.dashing:
+            self.status = "jump_right"
+            self.on_ground = False
+        if self.in_air and self.moving_left and not self.hit and not self.dashing:
+            self.status = "jump_left"
+            self.on_ground = False
+        if self.in_air and self.facing_right and not self.moving_right and not self.hit and not self.dashing:
+            self.status = "jump_zzz_right"
+            self.on_ground = False
+        if self.in_air and self.facing_left and not self.moving_left and not self.hit and not self.dashing:
+            self.status = "jump_zzz_left"
+            self.on_ground = False
+        # Katana logic
+        if self.moving_right and self.equipped == self.inventory[
+            0] and not self.dashing and not self.katana_run_attack and not self.katana_02:
+            self.status = "katana_run_right"
+        if self.moving_left and self.equipped == self.inventory[
+            0] and not self.dashing and not self.katana_run_attack and not self.katana_02:
+            self.status = "katana_run_left"
+        if self.moving_right and self.equipped == self.inventory[0] and self.in_air and not self.dashing:
+            self.status = "jump_right"
+        if self.moving_left and self.equipped == self.inventory[0] and self.in_air and not self.dashing:
+            self.status = "jump_left"
+    def input(self):
+        key = pygame.key.get_pressed()
+        if self.moving_right:
+            self.facing_right = True
+            self.facing_left = False
+        if self.moving_left:
+            self.facing_right = False
+            self.facing_left = True
+        # running right and left
+        if key[K_d] and not self.moving_left:
+            self.moving_right = True
+        else:
+            self.moving_right = False
+        if key[K_a] and not self.moving_right:
+            self.moving_left = True
+        else:
+            self.moving_left = False
+        # jumping right and left
+        if key[K_w] and self.on_ground:
+            self.in_air = True
+        # equipping katana
+        if key[K_1] and self.equipped != self.inventory[0]:
+            self.equipped = self.inventory[0]
+        if key[K_2] and self.equipped != self.inventory[1]:
+            self.equipped = self.inventory[1]
+        # dashing logic
+        if self.can_dash:
+            if self.equipped == self.inventory[0] and key[K_LSHIFT] and not self.dashing:
+                self.dashing = True
+        # punching logic
+        if key[K_f] and not self.punching and self.equipped == self.inventory[1]:
+            self.punching = True
+        # katana run attack logic
+        if key[K_g] and not self.punching and self.equipped == self.inventory[0] and self.on_ground and (
+                "idle" in self.status):
+            self.katana_run_attack = True
+        # katana 02 attack logic
+        if key[K_g] and self.equipped == self.inventory[0] and self.on_ground and (
+                self.moving_right or self.moving_left):
+            self.katana_02 = True
+        # Idle Animation Logic
+        if self.on_ground and self.facing_left:
+            self.status = "idle_left"
+        elif self.on_ground and self.facing_right:
+            self.status = "idle_right"
+        if self.on_ground and self.facing_left and self.equipped == self.inventory[0] and not self.dashing:
+            self.status = "katana_idle_left"
+        elif self.on_ground and self.facing_right and self.equipped == self.inventory[0] and not self.dashing:
+            self.status = "katana_idle_right"
+        # Running annimation logic
+        if self.on_ground and self.moving_right and not self.dashing:
+            self.status = "run_right"
+        if self.on_ground and self.moving_left and not self.dashing:
+            self.status = "run_left"
+        # dashing logic
+        if self.dashing and (self.facing_right or self.status == "katana_run_right"):
+            self.status = "dash_right"
+        if self.dashing and (self.facing_left or self.moving_left):
+            self.status = "dash_left"
+        # punching logic
+        if self.punching and self.on_ground and (self.facing_right or self.moving_right):
+            self.status = "punch_right"
+        if self.punching and self.on_ground and (self.facing_left or self.moving_left):
+            self.status = "punch_left"
+        # katana attack logic
+        if self.katana_run_attack and self.facing_right:
+            self.status = "katana_run_attack_right"
+        if self.katana_run_attack and self.facing_left:
+            self.status = "katana_run_attack_left"
+        if self.katana_02 and self.moving_right:
+            self.status = "katana_02_right"
+        if self.katana_02 and self.moving_left:
+            self.status = "katana_02_left"
+        # damage logic
+        if self.hit and (self.facing_right or self.moving_right or self.dashing or (
+                self.in_air and self.moving_right)):
+            self.status = "damage_right"
+        if self.hit and self.facing_left:
+            self.status = "damage_left"
+        # jumping Logic
+        if self.in_air and self.moving_right and not self.hit and not self.dashing:
+            self.status = "jump_right"
+            self.on_ground = False
+        if self.in_air and self.moving_left and not self.hit and not self.dashing:
+            self.status = "jump_left"
+            self.on_ground = False
+        if self.in_air and self.facing_right and not self.moving_right and not self.hit and not self.dashing:
+            self.status = "jump_zzz_right"
+            self.on_ground = False
+        if self.in_air and self.facing_left and not self.moving_left and not self.hit and not self.dashing:
+            self.status = "jump_zzz_left"
+            self.on_ground = False
+        # Katana logic
+        if self.moving_right and self.equipped == self.inventory[
+            0] and not self.dashing and not self.katana_run_attack and not self.katana_02:
+            self.status = "katana_run_right"
+        if self.moving_left and self.equipped == self.inventory[
+            0] and not self.dashing and not self.katana_run_attack and not self.katana_02:
+            self.status = "katana_run_left"
+        if self.moving_right and self.equipped == self.inventory[0] and self.in_air and not self.dashing:
+            self.status = "jump_right"
+        if self.moving_left and self.equipped == self.inventory[0] and self.in_air and not self.dashing:
+            self.status = "jump_left"
+#player instance
+player1 = Stickman(500, GROUND_LEVEL - 119)
+player2 = Stickman(800, GROUND_LEVEL - 119)
+while True:
+    el = time.time()
+    elapsed_time = round(el - savetime, 0)
+    mouse_pos = pygame.mouse.get_pos()
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            sys.exit(0)
+        if event.type == KEYDOWN:
+            if event.key == K_ESCAPE:
+                sys.exit(0)
+        if event.type == MOUSEBUTTONDOWN:
+            if player1.rect.collidepoint(mouse_pos):
+                player1.health -= 1
+                player1.hit = True
+    screen.blit(background, (0, 0))
+    #player 1 ui
+    pygame.draw.rect(screen, 'red', health_rect)
+    pygame.draw.rect(screen, 'blue', dash_rect)
+    screen.blit(health_bar_scaled, (0, 0))
+    screen.blit(dash_temp2, (-10, -70))
+
+    #player2 ui
+    pygame.draw.rect(screen, 'red', health_rect2)
+    pygame.draw.rect(screen, 'blue', dash_rect2)
+    screen.blit(health_bar2_scaled, (1210, 0))
+    screen.blit(dash_temp4, (1200, -70))
+    '''pygame.draw.rect(screen, 'black', ground_rect)'''
+    '''pygame.draw.rect(screen, 'white', player1.rect)'''
+    #Handling User Input
+    player1.input()
+    player2.input_player2()
+    player1.animate()
+    player2.animate()
+    player1.update_ui()
+    player2.update_ui2()
+    if player1.image in katana_02_right or player1.image in katana_02_left:
+        screen.blit(player1.image, (player1.rect.x - 32, player1.rect.y - 30))
+    elif player1.image in katana_run_attack_right or player1.image in katana_run_attack_left:
+        screen.blit(player1.image, (player1.rect.x - 32, player1.rect.y - 25))
+    else:
+        screen.blit(player1.image, (player1.rect.x, player1.rect.y))
+
+    if player2.image in katana_02_right or player2.image in katana_02_left:
+        screen.blit(player2.image, (player2.rect.x - 32, player2.rect.y - 30))
+    elif player2.image in katana_run_attack_right or player2.image in katana_run_attack_left:
+        screen.blit(player2.image, (player2.rect.x - 32, player2.rect.y - 25))
+    else:
+        screen.blit(player2.image, (player2.rect.x, player2.rect.y))
+    pygame.display.update()
+    clock.tick(60)
